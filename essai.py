@@ -85,7 +85,24 @@ def extract(data_dir, prefix, start_week, end_week):
             df = pd.concat([df, batch], sort=True)
     
     return df
+
+def clean(df):
+    """Clean dataframe."""
+    
+    df.columns = df.columns.str.lower().str.replace(' ', '_')
+    df['order_date'] = pd.to_datetime(df['order_date'])
+    df = df.rename(columns={'order_number': 'order_id'})
+    df = df.sort_values('order_date')
+    df['total_product_price'] = df['quantity'] * df['product_price']
+    df['cash_in'] = df.groupby('order_id')['total_product_price'].transform(np.sum)
+    df = df.drop(columns=['item_name', 'quantity', 'product_price', 
+                          'total_products', 'total_product_price'],
+                errors="ignore")
+    df = df.drop_duplicates()
+    df = df.reset_index(drop=True)
+    return df
+
 df1 = extract(data_dir= "C:/Users/277775/MLops/data",
        prefix="restaurant_1" , start_week=108, end_week=110)
-
+df1 = clean(df1)
 df1.head()
